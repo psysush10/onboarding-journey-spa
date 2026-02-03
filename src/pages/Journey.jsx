@@ -2,6 +2,10 @@ import { useParams } from "react-router-dom";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+
+
+
+
 const journeyData = {
   customerName: "Acme Corp",
   stages: [
@@ -21,10 +25,10 @@ const journeyData = {
       name: "Access & Data Collection",
       dependsOn: ["kickoff"],
       owner: "Customer",
-      dueDate: "2026-02-05",
+      dueDate: "2026-02-02",
       tasks: [
-        { id: 3, title: "Provide admin access", done: false },
-        { id: 4, title: "Upload sample data", done: false },
+        { id: 3, title: "Provide admin access", done: true },
+        { id: 4, title: "Upload sample data", done: true },
       ],
     },
     {
@@ -41,7 +45,7 @@ const journeyData = {
   ],
 };
 
-function Stage({ stage, allStages}) {
+function Stage({ stage, allStages, view}) {
   const [open, setOpen] = useState(false);
   const risk = getDueRisk(stage);
   const blocked = isStageBlocked(stage, allStages);
@@ -54,10 +58,6 @@ function Stage({ stage, allStages}) {
   return (
     <div
       style={{
-        //border: "1px solid #ddd",
-        //borderRadius: "8px",
-        //padding: "16px",
-        //marginBottom: "16px",
         border:
   risk === "overdue"
     ? "2px solid red"
@@ -74,36 +74,54 @@ function Stage({ stage, allStages}) {
     opacity: blocked ? 0.5 : 1,
   }}
   onClick={() => {
-    if (!blocked) setOpen(!open);
-  }}
+  if (blocked && view === "customer") return;
+  if (!blocked) setOpen(!open);
+}}
 >
         <div>
           <h4 style={{ margin: 0 }}>{stage.name}</h4>
-          {blocked && (
+          {blocked && view === "internal" && (
   <small style={{ color: "red" }}>
     Blocked — waiting on previous stage
   </small>
 )}
+
+{blocked && view === "customer" && (
+  <small style={{ color: "#999" }}>
+    This stage will open soon
+  </small>
+)}
           <small>
-            Owner: {stage.owner} · Due: {stage.dueDate}
-            <small
-  style={{
-    color:
-      risk === "overdue"
-        ? "red"
-        : risk === "due-soon"
-        ? "orange"
-        : risk === "on-track"
-        ? "green"
-        : "#999",
-    fontWeight: 600,
-  }}
->
-  {risk === "overdue" && "🔥 Overdue"}
-  {risk === "due-soon" && "⚠️ Due soon"}
-  {risk === "on-track" && "🟢 On track"}
-  {risk === "done" && "✅ Completed"}
-</small>
+            {/* Internal view sees full risk */}
+{view === "internal" && (
+  <small
+    style={{
+      color:
+        risk === "overdue"
+          ? "red"
+          : risk === "due-soon"
+          ? "orange"
+          : "green",
+      fontWeight: 600,
+    }}
+  >
+    {risk === "overdue" && "🔥 Overdue"}
+    {risk === "due-soon" && "⚠️ Due soon"}
+    {risk === "on-track" && "🟢 On track"}
+    {risk === "done" && "✅ Completed"}
+  </small>
+)}
+
+{/* Customer view sees calm language */}
+{view === "customer" && (
+  <small style={{ color: "#999" }}>
+    {status === "done"
+      ? "Completed"
+      : blocked
+      ? "Upcoming"
+      : "In progress"}
+  </small>
+)}
           </small>
         </div>
         <strong style={{ color: statusColors[stage.status] }}>
@@ -153,15 +171,35 @@ function getDueRisk(stage) {
   return "on-track";
 }
 
+function getOverallHealth(stages) {
+  let hasDueSoon = false;
+
+  for (const stage of stages) {
+    const risk = getDueRisk(stage);
+
+    if (risk === "overdue") {
+      return "red";
+    }
+
+    if (risk === "due-soon") {
+      hasDueSoon = true;
+    }
+  }
+
+  return hasDueSoon ? "amber" : "green";
+}
+
 export default function Journey() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   const { customerId } = useParams();
+  const [view, setView] = useState("internal"); // or "customer"
   const totalTasks = journeyData.stages.flatMap(s => s.tasks).length;
   const completedTasks = journeyData.stages
   .flatMap(s => s.tasks)
   .filter(t => t.done).length;
 
 const progress = Math.round((completedTasks / totalTasks) * 100);
+const health = getOverallHealth(journeyData.stages);
   return (
     <div style={{ padding: "24px", maxWidth: "800px", margin: "0 auto" }}>
 
@@ -171,7 +209,50 @@ const progress = Math.round((completedTasks / totalTasks) * 100);
       <h2>
         Onboarding Journey — {journeyData.customerName} ({customerId})
       </h2>
+      <div style={{ margin: "12px 0" }}>
+  <button
+    onClick={() => setView("internal")}
+    style={{
+      padding: "6px 12px",
+      marginRight: "8px",
+      fontWeight: view === "internal" ? "bold" : "normal",
+    }}
+  >
+    Internal View
+  </button>
+
+  <button
+    onClick={() => setView("customer")}
+    style={{
+      padding: "6px 12px",
+      fontWeight: view === "customer" ? "bold" : "normal",
+    }}
+  >
+    Customer View
+  </button>
+</div>
       <strong>Overall Progress:</strong> {progress}%
+      {view === "internal" && (
+        <div style={{ margin: "12px 0" }}>
+  <strong>Overall Health: </strong>
+  <span
+    style={{
+      color:
+        health === "red"
+          ? "red"
+          : health === "amber"
+          ? "orange"
+          : "green",
+      fontWeight: 700,
+    }}
+  >
+    {health === "red" && "🔴 Blocked / Overdue"}
+    {health === "amber" && "🟡 At Risk"}
+    {health === "green" && "🟢 On Track"}
+  </span>
+</div>
+      )}
+      
 
       <p style={{ color: "#666" }}>
         Stages run in parallel. Click a stage to view tasks.
@@ -182,6 +263,7 @@ const progress = Math.round((completedTasks / totalTasks) * 100);
     key={stage.id}
     stage={stage}
     allStages={journeyData.stages}
+    view={view}
   />
 ))}
     </div>
