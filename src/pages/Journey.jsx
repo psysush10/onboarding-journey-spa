@@ -8,7 +8,7 @@ const journeyData = {
     {
       id: "kickoff",
       name: "Kickoff & Alignment",
-      status: "done",
+      dependsOn: [],
       owner: "Sushanth",
       dueDate: "2026-02-01",
       tasks: [
@@ -19,7 +19,7 @@ const journeyData = {
     {
       id: "data",
       name: "Access & Data Collection",
-      status: "in-progress",
+      dependsOn: ["kickoff"],
       owner: "Customer",
       dueDate: "2026-02-05",
       tasks: [
@@ -30,7 +30,7 @@ const journeyData = {
     {
       id: "config",
       name: "Product Configuration",
-      status: "not-started",
+      dependsOn: ["data"],
       owner: "CSM",
       dueDate: "2026-02-07",
       tasks: [
@@ -41,8 +41,10 @@ const journeyData = {
   ],
 };
 
-function Stage({ stage }) {
+function Stage({ stage, allStages}) {
   const [open, setOpen] = useState(false);
+  const risk = getDueRisk(stage);
+  const blocked = isStageBlocked(stage, allStages);
     const statusColors = {
     done: "green",
     "in-progress": "orange",
@@ -52,20 +54,56 @@ function Stage({ stage }) {
   return (
     <div
       style={{
-        border: "1px solid #ddd",
-        borderRadius: "8px",
-        padding: "16px",
-        marginBottom: "16px",
+        //border: "1px solid #ddd",
+        //borderRadius: "8px",
+        //padding: "16px",
+        //marginBottom: "16px",
+        border:
+  risk === "overdue"
+    ? "2px solid red"
+    : risk === "due-soon"
+    ? "2px solid orange"
+    : "1px solid #ddd",
       }}
     >
       <div
-        style={{ display: "flex", justifyContent: "space-between", cursor: "pointer" }}
-        onClick={() => setOpen(!open)}
-      >
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    cursor: blocked ? "not-allowed" : "pointer",
+    opacity: blocked ? 0.5 : 1,
+  }}
+  onClick={() => {
+    if (!blocked) setOpen(!open);
+  }}
+>
         <div>
           <h4 style={{ margin: 0 }}>{stage.name}</h4>
+          {blocked && (
+  <small style={{ color: "red" }}>
+    Blocked — waiting on previous stage
+  </small>
+)}
           <small>
             Owner: {stage.owner} · Due: {stage.dueDate}
+            <small
+  style={{
+    color:
+      risk === "overdue"
+        ? "red"
+        : risk === "due-soon"
+        ? "orange"
+        : risk === "on-track"
+        ? "green"
+        : "#999",
+    fontWeight: 600,
+  }}
+>
+  {risk === "overdue" && "🔥 Overdue"}
+  {risk === "due-soon" && "⚠️ Due soon"}
+  {risk === "on-track" && "🟢 On track"}
+  {risk === "done" && "✅ Completed"}
+</small>
           </small>
         </div>
         <strong style={{ color: statusColors[stage.status] }}>
@@ -84,6 +122,35 @@ function Stage({ stage }) {
       )}
     </div>
   );
+}
+
+function isStageComplete(stage) {
+  return stage.tasks.every((t) => t.done);
+}
+
+function isStageBlocked(stage, allStages) {
+  return stage.dependsOn.some((depId) => {
+    const depStage = allStages.find((s) => s.id === depId);
+    return depStage && !isStageComplete(depStage);
+  });}
+
+  function daysBetween(today, dueDate) {
+  const msPerDay = 1000 * 60 * 60 * 24;
+  return Math.ceil((dueDate - today) / msPerDay);
+}
+
+function getDueRisk(stage) {
+  const today = new Date();
+  const due = new Date(stage.dueDate);
+
+  if (isStageComplete(stage)) return "done";
+
+  const daysLeft = daysBetween(today, due);
+
+  if (daysLeft < 0) return "overdue";
+  if (daysLeft <= 2) return "due-soon";
+
+  return "on-track";
 }
 
 export default function Journey() {
@@ -111,8 +178,12 @@ const progress = Math.round((completedTasks / totalTasks) * 100);
       </p>
 
       {journeyData.stages.map((stage) => (
-        <Stage key={stage.id} stage={stage} />
-      ))}
+  <Stage
+    key={stage.id}
+    stage={stage}
+    allStages={journeyData.stages}
+  />
+))}
     </div>
   );
 }
