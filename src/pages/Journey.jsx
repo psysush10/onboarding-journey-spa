@@ -42,7 +42,12 @@ const journeyData = {
 
 function Stage({ stage }) {
   const [open, setOpen] = useState(false);
-
+    const statusColors = {
+    done: "green",
+    "in-progress": "orange",
+    "not-started": "#999",
+    blocked: "red",
+  };
   return (
     <div
       style={{
@@ -62,7 +67,9 @@ function Stage({ stage }) {
             Owner: {stage.owner} · Due: {stage.dueDate}
           </small>
         </div>
-        <strong>{stage.status}</strong>
+        <strong style={{ color: statusColors[stage.status] }}>
+            {stage.status}
+        </strong>
       </div>
 
       {open && (
@@ -80,12 +87,18 @@ function Stage({ stage }) {
 
 export default function Journey() {
   const { customerId } = useParams();
+  const totalTasks = journeyData.stages.flatMap(s => s.tasks).length;
+  const completedTasks = journeyData.stages
+  .flatMap(s => s.tasks)
+  .filter(t => t.done).length;
 
+const progress = Math.round((completedTasks / totalTasks) * 100);
   return (
     <div style={{ padding: "24px", maxWidth: "800px", margin: "0 auto" }}>
       <h2>
         Onboarding Journey — {journeyData.customerName} ({customerId})
       </h2>
+      <strong>Overall Progress:</strong> {progress}%
 
       <p style={{ color: "#666" }}>
         Stages run in parallel. Click a stage to view tasks.
