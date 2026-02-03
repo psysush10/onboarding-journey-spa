@@ -76,7 +76,7 @@ function Stage({ stage }) {
       {open && (
         <ul style={{ marginTop: "12px" }}>
           {stage.tasks.map((task) => (
-            <li key={task.id}>
+            <li key={task.id} style={{ opacity: task.done ? 0.6 : 1 }}>
               {task.done ? "✅" : "⬜️"} {task.title}
             </li>
           ))}
