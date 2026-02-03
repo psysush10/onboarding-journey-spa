@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const journeyData = {
   customerName: "Acme Corp",
@@ -86,6 +87,7 @@ function Stage({ stage }) {
 }
 
 export default function Journey() {
+    const navigate = useNavigate();
   const { customerId } = useParams();
   const totalTasks = journeyData.stages.flatMap(s => s.tasks).length;
   const completedTasks = journeyData.stages
@@ -95,6 +97,10 @@ export default function Journey() {
 const progress = Math.round((completedTasks / totalTasks) * 100);
   return (
     <div style={{ padding: "24px", maxWidth: "800px", margin: "0 auto" }}>
+
+        <button onClick={() => navigate("/dashboard")}>
+  ← Back to Dashboard
+    </button>
       <h2>
         Onboarding Journey — {journeyData.customerName} ({customerId})
       </h2>
