@@ -142,3 +142,30 @@ It’s a demonstration of:
 - Walk through dependencies and risk
 - Switch to Customer View
 - Show how the same data tells a different story
+
+---
+
+## Day 2 Progress Summary
+
+Day 2 focused on extending the onboarding journey from high-level tracking into **stage-level activation**, while preserving clarity and empathy for different user roles.
+
+### What was added
+
+- Introduced **stage detail views** that allow drilling into individual onboarding stages
+- Enabled navigation flow: **Dashboard → Journey → Stage → Back to Journey**
+- Made stage detail experiences **persona-aware**, adapting tone and guidance for:
+  - Internal users (CS / Onboarding / TAM)
+  - Customer users
+- Explicitly framed each stage around:
+  - Why the stage exists
+  - What needs to be done next
+  - What value is unlocked after completion
+- Added “first value” previews to reinforce progress and motivation
+
+### Product decisions reinforced
+
+- Kept the same underlying data model for both personas, changing **messaging and signals**, not structure
+- Avoided premature abstraction and backend integration to validate UX and product flow first
+- Focused on activation and confidence, not just onboarding completion
+
+This milestone represents a complete, believable onboarding slice rather than a static UI demo.
