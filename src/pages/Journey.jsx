@@ -28,10 +28,10 @@ const journeyData = {
       name: "Access & Data Collection",
       dependsOn: ["kickoff"],
       owner: "Customer",
-      dueDate: "2026-02-02",
+      dueDate: "2026-02-05",
       tasks: [
-        { id: 3, title: "Provide admin access", done: true },
-        { id: 4, title: "Upload sample data", done: true },
+        { id: 3, title: "Provide admin access", done: false },
+        { id: 4, title: "Upload sample data", done: false },
       ],
     },
     {
@@ -100,7 +100,7 @@ function getOverallHealth(stages) {
 // ================================
 function Stage({ stage, allStages, view }) {
   const [open, setOpen] = useState(false);
-
+  const navigate = useNavigate();
   // Derived state (never store these)
   const blocked = isStageBlocked(stage, allStages);
   const risk = getDueRisk(stage);
@@ -134,6 +134,16 @@ function Stage({ stage, allStages, view }) {
         onClick={() => {
           // Customers cannot expand blocked stages
           if (blocked && view === "customer") return;
+          // Access & Data Collection → go to detail screen
+          if(stage.id === "data"){
+            navigate("/journey/acme/access-data", {"state":{view} });
+            return;
+          }
+          if(stage.id == "config"){
+            navigate("/journey/acme/product-config", {"state": view});
+            return;
+          }
+          // Default behavior: expand / collapse
           if (!blocked) setOpen(!open);
         }}
       >
@@ -159,9 +169,15 @@ function Stage({ stage, allStages, view }) {
   {/* Blocked messaging */}
   {blocked && view === "internal" && (
     <div style={{ fontSize: "14px", color: "red" }}>
-      Blocked — waiting on previous stage
+      Waiting on previous step
     </div>
   )}
+
+  {view === "internal" && stage.id === "data" && blocked && (
+  <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
+    Consider nudging the customer once dependencies are cleared.
+  </div>
+)}
 
   {blocked && view === "customer" && (
     <div style={{ fontSize: "14px", color: "#999" }}>
@@ -183,8 +199,8 @@ function Stage({ stage, allStages, view }) {
             : "green",
       }}
     >
-      {risk === "overdue" && "🔥 Overdue"}
-      {risk === "due-soon" && "⚠️ Due soon"}
+      {risk === "overdue" && "🔥 Needs attention"}
+      {risk === "due-soon" && "⚠️ Next milestone approaching soon"}
       {risk === "on-track" && "🟢 On track"}
       {risk === "done" && "✅ Completed"}
     </div>
@@ -199,6 +215,12 @@ function Stage({ stage, allStages, view }) {
         : "In progress"}
     </div>
   )}
+
+  {view === "customer" && stage.id === "data" && !blocked && (
+  <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
+    We’ll guide you through this step.
+  </div>
+)}
 </div>
         </div>
       </div>
