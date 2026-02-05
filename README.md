@@ -195,3 +195,21 @@ On Day 3, the focus shifted from the journey overview to stage-level depth, whil
 	•	The UI prioritizes clarity and trust over feature density
 
 By the end of Day 3, the onboarding flow supports realistic stage-level exploration while maintaining clean boundaries between operational state and user guidance.
+
+### Design Philosophy
+
+This project models customer onboarding as a guided journey rather than a checklist.
+
+### Key principles:
+
+1. Clarity over completeness
+The UI prioritizes progress visibility and next steps instead of exposing every possible action.
+
+2. Signals before controls
+Momentum, risk, and ownership are communicated through copy and visual cues rather than alerts or workflows.
+
+3. Adaptability without fragmentation
+The same journey structure supports different onboarding modes (self-serve, guided) through contextual copy, not branching UIs.
+
+4. Intentional constraints
+Stage completion and progress updates are read-only in this demo to keep the focus on structure, guidance, and system behavior.

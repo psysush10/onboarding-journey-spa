@@ -11,6 +11,14 @@ import { useNavigate } from "react-router-dom";
 // ================================
 const journeyData = {
   customerName: "Acme Corp",
+
+  // --- Journey metadata ---
+  journeyType: "Standard Onboarding",
+  journeyMode: "self-serve", // "guided", "enterprise"
+  startDate: "2026-01-28",
+  targetCompletion: "2026-02-10",
+  successOutcome: "Customer is live with first usable dashboard",
+
   stages: [
     {
       id: "kickoff",
@@ -18,6 +26,8 @@ const journeyData = {
       dependsOn: [],
       owner: "Sushanth",
       dueDate: "2026-02-01",
+      optional: true,
+      optionalReason: "Self-serve onboarding does not require a live kickoff",
       tasks: [
         { id: 1, title: "Schedule kickoff call", done: true },
         { id: 2, title: "Share onboarding plan", done: true },
@@ -58,9 +68,15 @@ function isStageComplete(stage) {
 
 function isStageBlocked(stage, allStages) {
   return stage.dependsOn.some((depId) => {
-    const depStage = allStages.find((s) => s.id === depId);
-    return depStage && !isStageComplete(depStage);
-  });
+  const depStage = allStages.find((s) => s.id === depId);
+
+  if (!depStage) return false;
+
+  // Optional stages do not block progress
+  if (depStage.optional) return false;
+
+  return !isStageComplete(depStage);
+});
 }
 
 function daysBetween(today, dueDate) {
@@ -162,6 +178,14 @@ function Stage({ stage, allStages, view }) {
   >
     {stage.name}
   </h4>
+  {view === "internal" && stage.optional && (
+  <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
+    Optional
+    {journeyData.journeyMode === "self-serve"
+      ? " — typically skipped for self-serve customers"
+      : ` — ${stage.optionalReason}`}
+  </div>
+)}
     {stage.id === "kickoff" && (
   <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
     This stage focuses on alignment and does not require setup.
@@ -223,6 +247,12 @@ function Stage({ stage, allStages, view }) {
   {view === "internal" && risk === "due-soon" && (
   <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
     Consider nudging the customer to avoid delays.
+  </div>
+)}
+
+{view === "internal" && journeyData.journeyMode === "self-serve" && (
+  <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
+    Expect lighter touchpoints unless progress stalls.
   </div>
 )}
 
@@ -338,6 +368,15 @@ export default function Journey() {
           Onboarding Journey — {journeyData.customerName} ({customerId})
         </h2>
 
+<p style={{ fontSize: "13px", color: "#777", marginBottom: "12px" }}>
+  {journeyData.journeyType}
+  {journeyData.journeyMode === "self-serve" &&
+    " · Designed for minimal setup and quick activation"}
+  {journeyData.journeyMode === "guided" &&
+    " · Includes hands-on support from our team"}
+    · Target completion: {journeyData.targetCompletion}
+</p>
+
         <div style={{ color: "#555", marginBottom: "10px" }}>
           <strong>Progress:</strong> {progress}% completed
           <p style={{ fontSize: "13px", color: "#777", marginTop: "6px" }}>
@@ -370,6 +409,12 @@ export default function Journey() {
 )}
           </div>
         )}
+
+        {view === "internal" && (
+  <p style={{ fontSize: "13px", color: "#777", marginTop: "6px" }}>
+    Success criteria: {journeyData.successOutcome}
+  </p>
+)}
       </div>
       </div>
 
