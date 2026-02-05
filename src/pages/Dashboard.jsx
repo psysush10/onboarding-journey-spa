@@ -1,19 +1,21 @@
 import { useNavigate } from "react-router-dom";
 
-const customers = [
+const journeys = [
   {
-    id: "acme",
-    name: "Acme Corp",
-    owner: "Sushanth",
-    progress: 65,
-    health: "at-risk",
+    customerId: "acme",
+    customerName: "Acme Corp",
+    journeyType: "Standard Onboarding",
+    journeyMode: "self-serve",
+    progress: 33,
+    health: "amber",
   },
   {
-    id: "globex",
-    name: "Globex Inc",
-    owner: "Sushanth",
-    progress: 90,
-    health: "on-track",
+    customerId: "globex",
+    customerName: "Globex Inc",
+    journeyType: "Guided Onboarding",
+    journeyMode: "guided",
+    progress: 10,
+    health: "green",
   },
 ];
 
@@ -39,33 +41,35 @@ export default function Dashboard() {
       <h2>Customer Onboarding Dashboard</h2>
 
       <table width="100%" cellPadding="10">
-        <thead>
-          <tr>
-            <th align="left">Customer</th>
-            <th align="left">Owner</th>
-            <th align="left">Progress</th>
-            <th align="left">Health</th>
-            <th></th>
-          </tr>
-        </thead>
         <tbody>
-          {customers.map((customer) => (
-            <tr key={customer.id}>
-              <td>{customer.name}</td>
-              <td>{customer.owner}</td>
-              <td>{customer.progress}%</td>
-              <td>
-                <HealthBadge health={customer.health} />
-              </td>
-              <td>
-                <button
-                  onClick={() => navigate(`/journey/${customer.id}`)}
-                >
-                  Open Journey →
-                </button>
-              </td>
-            </tr>
-          ))}
+          {journeys.map((journey) => (
+  <div
+    key={journey.customerId}
+    style={{
+      padding: "16px",
+      border: "1px solid #e0e0e0",
+      borderRadius: "8px",
+      marginBottom: "16px",
+    }}
+  >
+    <h3 style={{ marginBottom: "4px" }}>
+      {journey.customerName}
+    </h3>
+
+    <p style={{ fontSize: "13px", color: "#777" }}>
+      {journey.journeyType}
+    </p>
+
+    <button
+      style={{ marginTop: "8px" }}
+      onClick={() =>
+        navigate(`/journey/${journey.customerId}`)
+      }
+    >
+      Open Journey →
+    </button>
+  </div>
+))}
         </tbody>
       </table>
     </div>

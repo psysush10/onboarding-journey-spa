@@ -12,7 +12,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/journey/:customerId" element={<Journey />} />
-        <Route path="/journey/:accountId/:stageKey" element={<StageDetail />}/>
+        <Route path="/journey/:accountId/:stageKey" element={<StageDetail key={location.pathname}/>}/>
       </Routes>
     </BrowserRouter>
   );

@@ -1,66 +1,19 @@
 // ================================
 // Imports
 // ================================
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { getJourneyByCustomerId } from "../data/journey";
+import { stageMeta } from "../data/stages";
 
 // ================================
 // Mock Journey Data (temporary)
 // TODO: Replace with backend data later
 // ================================
-const journeyData = {
-  customerName: "Acme Corp",
-
-  // --- Journey metadata ---
-  journeyType: "Standard Onboarding",
-  journeyMode: "self-serve", // "guided", "enterprise"
-  startDate: "2026-01-28",
-  targetCompletion: "2026-02-10",
-  successOutcome: "Customer is live with first usable dashboard",
-
-  stages: [
-    {
-      id: "kickoff",
-      name: "Kickoff & Alignment",
-      dependsOn: [],
-      owner: "Sushanth",
-      dueDate: "2026-02-01",
-      optional: true,
-      optionalReason: "Self-serve onboarding does not require a live kickoff",
-      tasks: [
-        { id: 1, title: "Schedule kickoff call", done: true },
-        { id: 2, title: "Share onboarding plan", done: true },
-      ],
-    },
-    {
-      id: "data",
-      name: "Access & Data Collection",
-      dependsOn: ["kickoff"],
-      owner: "Customer",
-      dueDate: "2026-02-07",
-      tasks: [
-        { id: 3, title: "Provide admin access", done: false },
-        { id: 4, title: "Upload sample data", done: false },
-      ],
-    },
-    {
-      id: "config",
-      name: "Product Configuration",
-      dependsOn: ["data"],
-      owner: "CSM",
-      dueDate: "2026-02-09",
-      tasks: [
-        { id: 5, title: "Configure workflows", done: false },
-        { id: 6, title: "Set user roles", done: false },
-      ],
-    },
-  ],
-};
 
 // ================================
 // Helper Functions — PURE LOGIC
-// These can move to backend later unchanged
+// Safe to move to backend unchanged
 // ================================
 function isStageComplete(stage) {
   return stage.tasks.every((t) => t.done);
@@ -68,15 +21,15 @@ function isStageComplete(stage) {
 
 function isStageBlocked(stage, allStages) {
   return stage.dependsOn.some((depId) => {
-  const depStage = allStages.find((s) => s.id === depId);
+    const depStage = allStages.find((s) => s.id === depId);
 
-  if (!depStage) return false;
+    if (!depStage) return false;
 
-  // Optional stages do not block progress
-  if (depStage.optional) return false;
+    // Optional stages do not block progress
+    if (depStage.optional) return false;
 
-  return !isStageComplete(depStage);
-});
+    return !isStageComplete(depStage);
+  });
 }
 
 function daysBetween(today, dueDate) {
@@ -112,12 +65,16 @@ function getOverallHealth(stages) {
 // ================================
 // Stage Component
 // Renders ONE stage card
-// Behavior varies by `view` (internal vs customer)
+// Behavior varies by `view`
 // ================================
-function Stage({ stage, allStages, view }) {
+function Stage({ stage, allStages, view, journeyMode, customerId}) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  // Derived state (never store these)
+
+  // -------------------------------
+  // Derived stage state
+  // Never stored; always computed
+  // -------------------------------
   const blocked = isStageBlocked(stage, allStages);
   const risk = getDueRisk(stage);
 
@@ -125,21 +82,26 @@ function Stage({ stage, allStages, view }) {
     <div
       style={{
         border:
-  risk === "overdue"
-    ? "2px solid #f44336"
-    : risk === "due-soon"
-    ? "2px solid #ff9800"
-    : "1px solid #e0e0e0",
+          risk === "overdue"
+            ? "2px solid #f44336"
+            : risk === "due-soon"
+            ? "2px solid #ff9800"
+            : "1px solid #e0e0e0",
         borderRadius: "8px",
         padding: "16px",
         marginBottom: "16px",
         background: "#fff",
         boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
         lineHeight: 1.4,
-        minHeight: "96px"
+        minHeight: "96px",
       }}
     >
-      {/* ---------- Stage Header (clickable) ---------- */}
+      {/* -------------------------------
+         Click behavior
+         - Customers cannot open blocked stages
+         - Certain stages navigate to detail views
+         - Others expand inline
+         ------------------------------- */}
       <div
         style={{
           display: "flex",
@@ -148,165 +110,137 @@ function Stage({ stage, allStages, view }) {
           opacity: blocked ? 0.5 : 1,
         }}
         onClick={() => {
-         //console.log("CLICKED STAGE:", stage.id, "WITH VIEW:", view);
-          // Customers cannot expand blocked stages
           if (blocked && view === "customer") return;
-          // Access & Data Collection → go to detail screen
-          if(stage.id === "data"){
-           // console.log("NAVIGATING TO:", stage.id, "STATE:", { view });
-            navigate("/journey/acme/data", {state:{view} });
-            return;
-          }
-          if(stage.id === "config"){
-            //console.log("NAVIGATING TO:", stage.id, "STATE:", { view });
-            navigate("/journey/acme/config", {state: view});
-            return;
-          }
-          // Default behavior: expand / collapse
+
+          const navigableStages = ["data", "config"];
+
+          if (navigableStages.includes(stage.id)) {
+            navigate(
+            `/journey/${customerId}/${stage.id}`,
+            { state: { view } }
+            );
+  return;
+}
+
           if (!blocked) setOpen(!open);
         }}
       >
         <div>
-          <div>
-  {/* Stage title — ALWAYS visible */}
-  <h4
-    style={{
-      margin: "0 0 6px 0",
-      fontWeight: 600,
-      color: "#333",
-    }}
-  >
-    {stage.name}
-  </h4>
-  {view === "internal" && stage.optional && (
-  <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
-    Optional
-    {journeyData.journeyMode === "self-serve"
-      ? " — typically skipped for self-serve customers"
-      : ` — ${stage.optionalReason}`}
-  </div>
-)}
-    {stage.id === "kickoff" && (
-  <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
-    This stage focuses on alignment and does not require setup.
-  </div>
-)}
-  {/* Metadata row */}
-  <div style={{ fontSize: "14px", color: "#666", marginBottom: "4px" }}>
-    {view === "internal" && <><strong>Owner: </strong>{stage.owner} · </>}
-    <strong>Due:</strong> {stage.dueDate}
-  </div>
-  
+          {/* Stage title */}
+          <h4
+  style={{
+    margin: "0 0 6px 0",
+    fontWeight: 600,
+    fontSize: "18px",
+    color: "#111",
+  }}
+>
+  {stageMeta[stage.id]?.title ?? stage.id}
+</h4>
 
-  {/* Blocked messaging */}
-  {blocked && view === "internal" && (
-    <div style={{ fontSize: "14px", color: "red" }}>
-      Waiting on previous step
-    </div>
-  )}
+          {/* Optionality (internal only) */}
+          {view === "internal" && stage.optional && (
+            <div style={{ fontSize: "13px", color: "#777" }}>
+              Optional
+              {journeyMode === "self-serve"
+                ? " — typically skipped for self-serve customers"
+                : ` — ${stage.optionalReason}`}
+            </div>
+          )}
 
-  {view === "internal" && stage.id === "data" && blocked && (
-  <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
-    Consider nudging the customer once dependencies are cleared.
-  </div>
-)}
+          {/* Description */}
+          {stage.id === "kickoff" && (
+            <div style={{ fontSize: "13px", color: "#777" }}>
+              This stage focuses on alignment and does not require setup.
+            </div>
+          )}
 
-  {blocked && view === "customer" && (
-    <div style={{ fontSize: "14px", color: "#999" }}>
-      This stage will open soon
-    </div>
-  )}
+          {/* Metadata */}
+          <div style={{ fontSize: "14px", color: "#666", marginBottom: "4px" }}>
+            {view === "internal" && (
+              <>
+                <strong>Owner:</strong> {stage.owner} ·{" "}
+              </>
+            )}
+            <strong>Due:</strong> {stage.dueDate}
+          </div>
 
-  {/* Status / risk */}
-  {view === "internal" && (
-    <div
-      style={{
-        fontSize: "14px",
-        fontWeight: 600,
-        color:
-          risk === "overdue"
-            ? "red"
-            : risk === "due-soon"
-            ? "orange"
-            : "green",
-      }}
-    >
-      {risk === "overdue" && "🔥 Needs attention"}
-      {risk === "due-soon" && "⚠️ Next milestone approaching soon"}
-      {risk === "on-track" && "🟢 On track"}
-      {risk === "done" && "✅ Completed"}
-    </div>
-  )}
+          {/* ===============================
+              Internal signals & guidance
+              Ordered: status → ownership → context
+             =============================== */}
 
-  {view === "internal" && stage.owner === "Customer" && !isStageComplete(stage) && (
-  <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
-    Progress depends on customer action at this stage.
-  </div>
-)}
+          {view === "internal" && (
+            <div
+              style={{
+                fontSize: "14px",
+                fontWeight: 600,
+                color:
+                  risk === "overdue"
+                    ? "red"
+                    : risk === "due-soon"
+                    ? "orange"
+                    : "green",
+              }}
+            >
+              {risk === "overdue" && "🔥 Needs attention"}
+              {risk === "due-soon" && "⚠️ Next milestone approaching soon"}
+              {risk === "on-track" && "🟢 On track"}
+              {risk === "done" && "✅ Completed"}
+            </div>
+          )}
 
-  {view === "internal" && risk === "due-soon" && (
-  <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
-    Consider nudging the customer to avoid delays.
-  </div>
-)}
+          {view === "internal" &&
+            stage.owner === "Customer" &&
+            !isStageComplete(stage) && (
+              <div style={{ fontSize: "13px", color: "#777" }}>
+                Progress depends on customer action at this stage.
+              </div>
+            )}
 
-{view === "internal" && journeyData.journeyMode === "self-serve" && (
-  <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
-    Expect lighter touchpoints unless progress stalls.
-  </div>
-)}
+          {view === "internal" && risk === "due-soon" && (
+            <div style={{ fontSize: "13px", color: "#777" }}>
+              Consider nudging the customer to avoid delays.
+            </div>
+          )}
 
-{view === "internal" && risk === "overdue" && (
-  <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
-    This delay may impact overall onboarding timelines.
-  </div>
-)}
+          {view === "internal" && risk === "overdue" && (
+            <div style={{ fontSize: "13px", color: "#777" }}>
+              This delay may impact overall onboarding timelines.
+            </div>
+          )}
 
-{view === "internal" && blocked && risk === "due-soon" && (
-  <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
-    Consider checking in to unblock progress.
-  </div>
-)}
+          {view === "internal" && stage.id === "data" && (
+            <div style={{ fontSize: "13px", color: "#777" }}>
+              This stage commonly takes longer due to security reviews.
+            </div>
+          )}
 
-{view === "internal" && stage.id === "data" && (
-  <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
-    This stage commonly takes longer due to security reviews.
-  </div>
-)}
+          {/* Customer-facing status */}
+          {view === "customer" && (
+            <div style={{ fontSize: "14px", color: "#999" }}>
+              {isStageComplete(stage)
+                ? "Completed"
+                : blocked
+                ? "Waiting for previous step"
+                : "In progress"}
+            </div>
+          )}
 
-  {view === "customer" && (
-    <div style={{ fontSize: "14px", color: "#999" }}>
-      {isStageComplete(stage)
-        ? "Completed"
-        : blocked
-        ? "Waiting for previous step"
-        : "In progress"}
-    </div>
-  )}
-
-  {view === "customer" && stage.id === "data" && !blocked && (
-  <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
-    We’ll guide you through this step.
-  </div>
-)}
-</div>
+          {view === "customer" && stage.id === "data" && !blocked && (
+            <div style={{ fontSize: "13px", color: "#777" }}>
+              We’ll guide you through this step.
+            </div>
+          )}
         </div>
       </div>
 
-      {/* ---------- Task List ---------- */}
+      {/* Inline task list (non-navigational stages only) */}
       {open && (
         <ul style={{ marginTop: "12px" }}>
           {stage.tasks.map((task) => (
-            <li
-  key={task.id}
-  style={{
-    opacity: task.done ? 0.7 : 1,
-    color: "#333",
-    fontSize: "14px",
-    lineHeight: 1.5,
-  }}
->
-              {task.done ? "✅" : "⬜️"} {task.title}
+            <li key={task.id} style={{ fontSize: "14px" }}>
+              {task.done ? "✅" : "⬜"} {task.title}
             </li>
           ))}
         </ul>
@@ -316,30 +250,36 @@ function Stage({ stage, allStages, view }) {
 }
 
 // ================================
-// Journey Page (Top-level view)
+// Journey Page (Top-level)
 // Owns:
-// - view mode (internal / customer)
+// - view mode
 // - progress
 // - overall health
 // ================================
 
-const lastUpdatedStage = journeyData.stages
-  .slice()
-  .reverse()
-  .find(stage => stage.tasks.some(t => t.done));
-
-const lastUpdatedLabel = lastUpdatedStage
-  ? `${lastUpdatedStage.name} updated recently`
-  : "No recent activity";
-
 export default function Journey() {
   const navigate = useNavigate();
   const { customerId } = useParams();
+  const journeyData = getJourneyByCustomerId(customerId);
+    if (!journeyData) {
+  return (
+    <div style={{ padding: "32px" }}>
+      <h2>Unknown customer</h2>
+      <p>This onboarding journey does not exist.</p>
+    </div>
+  );
+}
+  // Infer last activity (proxy for backend event data)
+  const lastUpdatedStage = journeyData.stages
+  .slice()
+  .reverse()
+  .find((stage) => stage.tasks.some((t) => t.done));
 
-  // ---------- View Mode ----------
+  const lastUpdatedLabel = lastUpdatedStage
+  ? `${lastUpdatedStage.name} updated recently`
+  : "No recent activity";
   const [view, setView] = useState("internal");
 
-  // ---------- Progress ----------
   const totalTasks = journeyData.stages.flatMap((s) => s.tasks).length;
   const completedTasks = journeyData.stages
     .flatMap((s) => s.tasks)
@@ -348,120 +288,63 @@ export default function Journey() {
   const progress = Math.round((completedTasks / totalTasks) * 100);
   const health = getOverallHealth(journeyData.stages);
 
+
+
   return (
     <div style={{ padding: "24px", maxWidth: "800px", margin: "0 auto" }}>
-      {/* ---------- Navigation ---------- */}
-      <button onClick={() => navigate("/dashboard")}>
-        ← Back to Dashboard
-      </button>
+      <button onClick={() => navigate("/dashboard")}>← Back to Dashboard</button>
 
-      {/* ---------- Overview Section ---------- */}
-      <div
-  style={{
-    marginBottom: "28px",
-    paddingBottom: "16px",
-    borderBottom: "1px solid #eee",
-  }}
->
-      <div style={{ marginBottom: "28px" }}>
-        <h2 style={{ marginBottom: "6px", fontWeight: 600 }}>
+      {/* Journey overview */}
+      <div style={{ marginBottom: "28px", borderBottom: "1px solid #eee" }}>
+        <h2>
           Onboarding Journey — {journeyData.customerName} ({customerId})
         </h2>
 
-<p style={{ fontSize: "13px", color: "#777", marginBottom: "12px" }}>
-  {journeyData.journeyType}
-  {journeyData.journeyMode === "self-serve" &&
-    " · Designed for minimal setup and quick activation"}
-  {journeyData.journeyMode === "guided" &&
-    " · Includes hands-on support from our team"}
-    · Target completion: {journeyData.targetCompletion}
-</p>
+        <p style={{ fontSize: "13px", color: "#777" }}>
+          {journeyData.journeyType} · Designed for minimal setup and quick
+          activation · Target completion: {journeyData.targetCompletion}
+        </p>
 
-        <div style={{ color: "#555", marginBottom: "10px" }}>
+        <p>
           <strong>Progress:</strong> {progress}% completed
-          <p style={{ fontSize: "13px", color: "#777", marginTop: "6px" }}>
-  Last activity: {lastUpdatedLabel}
-</p>
-        </div>
+        </p>
+
+        <p style={{ fontSize: "13px", color: "#777" }}>
+          Last activity: {lastUpdatedLabel}
+        </p>
 
         {view === "internal" && (
-          <div style={{ marginBottom: "10px" }}>
-            <strong>Overall Health: </strong>
-            <span
-              style={{
-                color:
-                  health === "red"
-                    ? "red"
-                    : health === "amber"
-                    ? "orange"
-                    : "green",
-                fontWeight: 600,
-              }}
-            >
-              {health === "red" && "🔴 Blocked / Overdue"}
-              {health === "amber" && "🟡 At Risk"}
-              {health === "green" && "🟢 On Track"}
-            </span>
-            {view === "internal" && health !== "green" && (
-  <p style={{ fontSize: "13px", color: "#777", marginTop: "6px" }}>
-    This journey may need attention to maintain momentum.
-  </p>
-)}
-          </div>
+          <>
+            <p>
+              <strong>Overall Health:</strong>{" "}
+              {health === "red"
+                ? "🔴 Blocked / Overdue"
+                : health === "amber"
+                ? "🟡 At Risk"
+                : "🟢 On Track"}
+            </p>
+            <p style={{ fontSize: "13px", color: "#777" }}>
+              Success criteria: {journeyData.successOutcome}
+            </p>
+          </>
         )}
-
-        {view === "internal" && (
-  <p style={{ fontSize: "13px", color: "#777", marginTop: "6px" }}>
-    Success criteria: {journeyData.successOutcome}
-  </p>
-)}
-      </div>
       </div>
 
-      {/* ---------- View Toggle ---------- */}
+      {/* View toggle */}
       <div style={{ marginBottom: "28px" }}>
-        <div style={{ marginBottom: "6px", color: "#666", fontSize: "14px" }}>
-  View as:
-</div>
-        <button
-  onClick={() => setView("internal")}
-  style={{
-    padding: "6px 14px",
-    marginRight: "8px",
-    borderRadius: "6px",
-    border: view === "internal" ? "2px solid #333" : "1px solid #ccc",
-    background: view === "internal" ? "#f5f5f5" : "#fff",
-    color: "#333", // ✅ FIX
-    fontWeight: 600,
-    cursor: "pointer",
-  }}
->
-  Internal View
-</button>
-
-        <button
-  onClick={() => setView("customer")}
-  style={{
-    padding: "6px 14px",
-    borderRadius: "6px",
-    border: view === "customer" ? "2px solid #333" : "1px solid #ccc",
-    background: view === "customer" ? "#f5f5f5" : "#fff",
-    color: "#333", // ✅ FIX
-    fontWeight: 600,
-    cursor: "pointer",
-  }}
->
-  Customer View
-</button>
+        <button onClick={() => setView("internal")}>Internal View</button>
+        <button onClick={() => setView("customer")}>Customer View</button>
       </div>
 
-      {/* ---------- Stages ---------- */}
+      {/* Stages */}
       {journeyData.stages.map((stage) => (
         <Stage
           key={stage.id}
           stage={stage}
           allStages={journeyData.stages}
           view={view}
+          journeyMode={journeyData.journeyMode}
+          customerId={customerId}
         />
       ))}
     </div>
