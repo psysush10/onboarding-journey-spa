@@ -132,15 +132,18 @@ function Stage({ stage, allStages, view }) {
           opacity: blocked ? 0.5 : 1,
         }}
         onClick={() => {
+         //console.log("CLICKED STAGE:", stage.id, "WITH VIEW:", view);
           // Customers cannot expand blocked stages
           if (blocked && view === "customer") return;
           // Access & Data Collection → go to detail screen
           if(stage.id === "data"){
-            navigate("/journey/acme/access-data", {"state":{view} });
+           // console.log("NAVIGATING TO:", stage.id, "STATE:", { view });
+            navigate("/journey/acme/data", {state:{view} });
             return;
           }
-          if(stage.id == "config"){
-            navigate("/journey/acme/product-config", {"state": view});
+          if(stage.id === "config"){
+            //console.log("NAVIGATING TO:", stage.id, "STATE:", { view });
+            navigate("/journey/acme/config", {state: view});
             return;
           }
           // Default behavior: expand / collapse
@@ -159,7 +162,11 @@ function Stage({ stage, allStages, view }) {
   >
     {stage.name}
   </h4>
-
+    {stage.id === "kickoff" && (
+  <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
+    This stage focuses on alignment and does not require setup.
+  </div>
+)}
   {/* Metadata row */}
   <div style={{ fontSize: "14px", color: "#666", marginBottom: "4px" }}>
     {view === "internal" && <>Owner: {stage.owner} · </>}
