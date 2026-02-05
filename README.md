@@ -169,3 +169,29 @@ Day 2 focused on extending the onboarding journey from high-level tracking into 
 - Focused on activation and confidence, not just onboarding completion
 
 This milestone represents a complete, believable onboarding slice rather than a static UI demo.
+
+
+### Day 3 — Stage Detail Views & Persona-Aware Guidance
+
+On Day 3, the focus shifted from the journey overview to stage-level depth, while keeping the experience realistic and intentionally read-only.
+
+### Key outcomes:
+	•	Implemented a dedicated Stage Detail view for onboarding stages
+	•	Introduced a clear separation of responsibilities:
+	•	Journey view owns progress, health, and operational state
+	•	Stage Detail view focuses on guidance, expectations, and outcomes
+	•	Built persona-aware rendering:
+	•	Customer view shows clear, actionable steps with reassurance
+	•	Internal view shows observational notes and recommended actions
+	•	Ensured all stage detail content is config-driven (stageConfig), making future customization straightforward
+	•	Explicitly avoided premature interactivity:
+	•	No task completion or progress mutation on the stage detail screen
+	•	Read-only by design, mirroring how real onboarding tools often work
+	•	Improved visual hierarchy and scanability so each stage can be understood in seconds
+
+### Design decisions:
+	•	Not all stages are drill-downable (e.g. Kickoff), by intent
+	•	Routing state is handled defensively to support both internal and customer contexts
+	•	The UI prioritizes clarity and trust over feature density
+
+By the end of Day 3, the onboarding flow supports realistic stage-level exploration while maintaining clean boundaries between operational state and user guidance.

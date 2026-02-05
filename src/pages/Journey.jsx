@@ -28,7 +28,7 @@ const journeyData = {
       name: "Access & Data Collection",
       dependsOn: ["kickoff"],
       owner: "Customer",
-      dueDate: "2026-02-05",
+      dueDate: "2026-02-07",
       tasks: [
         { id: 3, title: "Provide admin access", done: false },
         { id: 4, title: "Upload sample data", done: false },
@@ -39,7 +39,7 @@ const journeyData = {
       name: "Product Configuration",
       dependsOn: ["data"],
       owner: "CSM",
-      dueDate: "2026-02-07",
+      dueDate: "2026-02-09",
       tasks: [
         { id: 5, title: "Configure workflows", done: false },
         { id: 6, title: "Set user roles", done: false },
@@ -169,9 +169,10 @@ function Stage({ stage, allStages, view }) {
 )}
   {/* Metadata row */}
   <div style={{ fontSize: "14px", color: "#666", marginBottom: "4px" }}>
-    {view === "internal" && <>Owner: {stage.owner} · </>}
-    Due: {stage.dueDate}
+    {view === "internal" && <><strong>Owner: </strong>{stage.owner} · </>}
+    <strong>Due:</strong> {stage.dueDate}
   </div>
+  
 
   {/* Blocked messaging */}
   {blocked && view === "internal" && (
@@ -213,12 +214,42 @@ function Stage({ stage, allStages, view }) {
     </div>
   )}
 
+  {view === "internal" && stage.owner === "Customer" && !isStageComplete(stage) && (
+  <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
+    Progress depends on customer action at this stage.
+  </div>
+)}
+
+  {view === "internal" && risk === "due-soon" && (
+  <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
+    Consider nudging the customer to avoid delays.
+  </div>
+)}
+
+{view === "internal" && risk === "overdue" && (
+  <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
+    This delay may impact overall onboarding timelines.
+  </div>
+)}
+
+{view === "internal" && blocked && risk === "due-soon" && (
+  <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
+    Consider checking in to unblock progress.
+  </div>
+)}
+
+{view === "internal" && stage.id === "data" && (
+  <div style={{ fontSize: "13px", color: "#777", marginTop: "4px" }}>
+    This stage commonly takes longer due to security reviews.
+  </div>
+)}
+
   {view === "customer" && (
     <div style={{ fontSize: "14px", color: "#999" }}>
       {isStageComplete(stage)
         ? "Completed"
         : blocked
-        ? "Upcoming"
+        ? "Waiting for previous step"
         : "In progress"}
     </div>
   )}
@@ -261,6 +292,16 @@ function Stage({ stage, allStages, view }) {
 // - progress
 // - overall health
 // ================================
+
+const lastUpdatedStage = journeyData.stages
+  .slice()
+  .reverse()
+  .find(stage => stage.tasks.some(t => t.done));
+
+const lastUpdatedLabel = lastUpdatedStage
+  ? `${lastUpdatedStage.name} updated recently`
+  : "No recent activity";
+
 export default function Journey() {
   const navigate = useNavigate();
   const { customerId } = useParams();
@@ -299,6 +340,9 @@ export default function Journey() {
 
         <div style={{ color: "#555", marginBottom: "10px" }}>
           <strong>Progress:</strong> {progress}% completed
+          <p style={{ fontSize: "13px", color: "#777", marginTop: "6px" }}>
+  Last activity: {lastUpdatedLabel}
+</p>
         </div>
 
         {view === "internal" && (
@@ -319,6 +363,11 @@ export default function Journey() {
               {health === "amber" && "🟡 At Risk"}
               {health === "green" && "🟢 On Track"}
             </span>
+            {view === "internal" && health !== "green" && (
+  <p style={{ fontSize: "13px", color: "#777", marginTop: "6px" }}>
+    This journey may need attention to maintain momentum.
+  </p>
+)}
           </div>
         )}
       </div>
