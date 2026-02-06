@@ -23,7 +23,7 @@ export type JourneyStage = {
   id: string;
   name: string;
   owner: "Customer" | "CSM";
-  dependsOn: string[];
+  dependsOn: string[]; // stage IDs this stage depends on
   dueDate: string;
   optional?: boolean;
   optionalReason?: string;
@@ -66,6 +66,7 @@ export const journeys: Record<string, Journey> = {
         dueDate: "2026-02-01",
         optional: true,
         optionalReason: "Typically skipped for self-serve customers",
+        order: 1,
         tasks: [
           { id: 1, title: "Schedule kickoff call", done: true },
         ],
@@ -76,6 +77,7 @@ export const journeys: Record<string, Journey> = {
         owner: "Customer",
         dependsOn: ["kickoff"],
         dueDate: "2026-02-07",
+        order: 2,
         tasks: [
           { id: 2, title: "Provide admin access", done: false },
         ],
@@ -86,6 +88,7 @@ export const journeys: Record<string, Journey> = {
         owner: "CSM",
         dependsOn: ["data"],
         dueDate: "2026-02-09",
+        order:3,
         tasks: [
           { id: 3, title: "Configure workflows", done: false },
         ],
@@ -110,6 +113,7 @@ export const journeys: Record<string, Journey> = {
         owner: "Customer",
         dependsOn: [],
         dueDate: "2026-02-10",
+        order: 1,
         tasks: [
           { id: 1, title: "Grant system access", done: false },
         ],
@@ -120,6 +124,7 @@ export const journeys: Record<string, Journey> = {
         owner: "CSM",
         dependsOn: ["data"],
         dueDate: "2026-02-15",
+        order: 2,
         tasks: [
           { id: 2, title: "Run guided setup session", done: false },
         ],

@@ -58,3 +58,11 @@ Changes over time
     The customer can identify the stage and preciesly the task in which they are stuck.
 
     If I only had these types and no UI, could I build three different frontends?” - Yes
+
+
+Step2
+1️⃣ Get active stage
+2️⃣ Complete a stage
+3️⃣ Check if journey is done
+Step 3: Wire it to Journey
+Step 4: Console-proof it

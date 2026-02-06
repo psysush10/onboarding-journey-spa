@@ -113,20 +113,7 @@ export default function StageDetail() {
   const { accountId, stageKey } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-console.log("StageDetail route params:", {
-  accountId,
-  stageKey,
-});
 
-console.log(
-  "Available customers:",
-  Object.keys(stageConfigByCustomer)
-);
-
-console.log(
-  "Resolved stage:",
-  stageConfigByCustomer[accountId || ""]?.[stageKey || ""]
-);
   // -------------------------------
   // View resolution
   // View is passed from Journey to preserve context.
