@@ -1,0 +1,60 @@
+What is the single source of truth for:
+	•	active journey
+    Journey type declared in journey.ts
+
+ 	•	active stage
+    Stage can be arrived from JourneyStage type from journey.ts but not sure how we can find if a stage is 
+    active or not at the moment.
+
+    That means “active” is not encoded yet. You have two clean options (pick one, not both):
+    Option A (recommended): currentStageId is the truth
+	    •	Journey owns:
+	    •	currentStageId
+	    •	Stages don’t know if they’re active
+	    •	Active stage = stages.find(id === currentStageId)
+    This keeps control centralized.
+
+	•	What changes when a stage completes?
+    When the tasks of a the stage are complete, the stage is marked as complete. Not sure where in JourneyStage are we capturing that.
+    If the next stage depends on the stage that gets completed, the next stage opens up for
+    internal teams and the customer.
+
+        A stage needs some way to say:
+	        •	not started
+	        •	in progress
+	        •	completed
+
+         Minimal, v1-safe addition:
+        status: "locked" | "active" | "completed"
+
+	•	What must persist if the user refreshes?
+    If the internal user refreshes, the user must be seeing the list of journeys, the stages and its current status. 
+
+For Journey
+    Never changes
+	•	id
+	•	customerId
+	•	journeyType(may change over time too)
+	•	startDate(may change over time too)
+
+Changes over time
+	•	currentStageId
+	•	completedAt
+	•	status
+
+
+    •	Can I reconstruct progress from this?
+
+    Progress of a stage is based on completion of tasks associated with the stage. 
+    Overall progress of the journey is based on the progress of each stage.
+
+	•	Can I resume mid-journey?
+    Need more clarity.
+        You can resume mid-journey if and only if:
+	        •	currentStageId is persisted
+	        •	Stage completion is persisted
+	        •	Can I answer: “Where is the user stuck?”
+    
+    The customer can identify the stage and preciesly the task in which they are stuck.
+
+    If I only had these types and no UI, could I build three different frontends?” - Yes

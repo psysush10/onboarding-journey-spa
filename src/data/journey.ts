@@ -2,6 +2,9 @@
 // Types — backend-shaped contracts
 // ================================
 
+
+// Represents a customer's full onboarding lifecycle.
+// Progress should always be resumable.
 export type Journey = {
   id: string;
   customerId: string;
@@ -14,6 +17,8 @@ export type Journey = {
   stages: JourneyStage[];
 };
 
+
+// A single step in a journey. Only one stage can be active at a time.
 export type JourneyStage = {
   id: string;
   name: string;
@@ -23,6 +28,8 @@ export type JourneyStage = {
   optional?: boolean;
   optionalReason?: string;
   tasks: StageTask[];
+  order: number;
+  completedAt?: string;
 };
 
 export type StageTask = {
