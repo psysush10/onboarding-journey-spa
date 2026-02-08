@@ -76,10 +76,10 @@ export const journeys: Record<string, Journey> = {
         name: "Access & Data Collection",
         owner: "Customer",
         dependsOn: ["kickoff"],
-        dueDate: "2026-02-07",
+        dueDate: "2026-02-05",
         order: 2,
         tasks: [
-          { id: 2, title: "Provide admin access", done: false },
+          { id: 2, title: "Provide admin access", done: true },
         ],
       },
       {

@@ -9,7 +9,16 @@ export function getEligibleStages(stages: JourneyStage[]) {
     .filter(stage => {
       if (stage.completedAt) return false;
       if (!stage.dependsOn || stage.dependsOn.length === 0) return true;
-      return stage.dependsOn.every(id => completedStageIds.has(id));
+      // 3. All dependencies must be completed
+      return stage.dependsOn.every(depStageId => {
+        const dependency = stages.find(s => s.id === depStageId);
+
+        // If dependency is optional, it should NOT block
+        if (dependency?.optional) return true;
+
+        // Otherwise it must be completed
+        return completedStageIds.has(depStageId);
+      });
     })
     .sort((a, b) => a.order - b.order);
 }
