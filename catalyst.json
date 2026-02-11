@@ -1,6 +1,9 @@
 {
   "functions": {
-    "targets": ["auth-login"],
+    "targets": [
+      "auth-login",
+      "journeys"
+    ],
     "ignore": [],
     "source": "functions"
   },

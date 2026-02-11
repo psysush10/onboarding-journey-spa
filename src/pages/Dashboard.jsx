@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 const journeys = [
   {
@@ -35,12 +36,32 @@ function HealthBadge({ health }) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [journeys, setJourneys] = useState([]);
+
+  useEffect(() => {
+  fetch("/server/journeys/execute")
+    .then((res) => res.json())
+    .then((data) => {
+      const parsed = JSON.parse(data.output);
+      setJourneys(parsed.journeys);
+    })
+    .catch((err) => {
+      console.error("Error fetching journeys:", err);
+    });
+}, []);
 
   return (
     <div style={{ padding: "24px" }}>
       <h2>Customer Onboarding Dashboard</h2>
+      <div>
+      {journeys.map((j) => (
+        <div key={j.id}>
+          {j.customerName} — {j.status}
+        </div>
+      ))}
+    </div>
 
-      <table width="100%" cellPadding="10">
+      {/* <table width="100%" cellPadding="10">
         <tbody>
           {journeys.map((journey) => (
   <div
@@ -71,7 +92,7 @@ export default function Dashboard() {
   </div>
 ))}
         </tbody>
-      </table>
+      </table> */}
     </div>
   );
 }
