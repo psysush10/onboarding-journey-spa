@@ -1,0 +1,9 @@
+{
+	"name": "auth-login",
+	"version": "1.0.0",
+	"main": "index.js",
+	"author": "irthifa.khan@zohotest.com",
+	"dependencies": {
+		"zcatalyst-sdk-node": "latest"
+	}
+}

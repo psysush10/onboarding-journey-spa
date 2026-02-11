@@ -1,1 +1,10 @@
-{}
+{
+  "functions": {
+    "targets": ["auth-login"],
+    "ignore": [],
+    "source": "functions"
+  },
+  "client": {
+    "source": "client"
+  }
+}

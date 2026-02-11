@@ -7,7 +7,6 @@ import RequireAuth from "./auth/RequireAuth";
 
 function App() {
   return (
-    <BrowserRouter>
       <Routes>
         <Route path="/" element={<RequireAuth><Dashboard /></RequireAuth>} />
         <Route path="/login" element={<Login />} />
@@ -15,7 +14,6 @@ function App() {
         <Route path="/journey/:customerId" element={<RequireAuth><Journey /></RequireAuth>} />
         <Route path="/journey/:accountId/:stageKey" element={<RequireAuth><StageDetail key={location.pathname}/></RequireAuth>}/>
       </Routes>
-    </BrowserRouter>
   );
 }
 

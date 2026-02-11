@@ -4,18 +4,15 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import type {Journey, JourneyStage } from "../data/journey";
-import { journeys } from "../data/journey";
 import { stageMeta } from "../data/stages";
 import { useAuth } from "../auth/AuthContext";
-
-
 
 import {
   getEligibleStages,
   isJourneyCompleted,
 } from "../domain/journey.logic";
 
-import { mockJourney } from "../mock/journey.mock";
+import { fetchJourney, saveJourney } from "../api/journeyApi";
 
 // ================================
 // Constants
@@ -169,39 +166,26 @@ function Stage({
 // ================================
 export default function Journey() {
 
-  const { user } = useAuth();
-if (!user) {
-  throw new Error("Journey rendered without authenticated user");
-}
+const auth = useAuth();
+const user = auth.user!; // safe because RequireAuth guarantees it
 const isInternal = user.role === "internal";
 
   // -------------------------------
   // State (hydrated)
   // -------------------------------
   const [activeCustomerId, setActiveCustomerId] = useState<string>(() => {
+    if (user.role === "customer") {
+    return user.customerId!;
+  }
   return localStorage.getItem("active_customer_id") ?? "acme";
-});
+  });
 
-
-const [journeyData, setJourneyData] = useState<Journey>(() => {
-  const stored = localStorage.getItem(
-    `journey_${activeCustomerId}`
-  );
-
-  return stored
-    ? (JSON.parse(stored) as Journey)
-    : journeys[activeCustomerId];
-});
-
-  // -------------------------------
-  // Persistence
-  // -------------------------------
+const [journeyData, setJourneyData] = useState<Journey | null>(null);
+const [loading, setLoading] = useState(false);
 
     // ================================
   // EFFECT — LOAD JOURNEY ON CUSTOMER CHANGE 
   // ================================
-
-
 
   useEffect(() => {
   if (user.role === "customer") {
@@ -209,23 +193,34 @@ const [journeyData, setJourneyData] = useState<Journey>(() => {
   }
 }, [user]);
 
+  // -------------------------------
+  // Persistence
+  // -------------------------------
 
    useEffect(() => {
-  const stored = localStorage.getItem(
-    `journey_${activeCustomerId}`
-  );
+  let cancelled = false;
 
-  const baseJourney = stored
-    ? (JSON.parse(stored) as Journey)
-    : journeys[activeCustomerId];
+  async function loadJourney() {
+    setLoading(true);
+    try {
+      const journey = await fetchJourney(activeCustomerId);
+      if (!cancelled) {
+        setJourneyData(journey);
+      }
+    } finally {
+      if (!cancelled) {
+        setLoading(false);
+      }
+    }
+  }
 
-  // 🔑 CLONE to avoid shared mutation
-  setJourneyData(
-    structuredClone
-      ? structuredClone(baseJourney)
-      : JSON.parse(JSON.stringify(baseJourney))
-  );
+  loadJourney();
+
+  return () => {
+    cancelled = true;
+  };
 }, [activeCustomerId]);
+
 
     // ================================
   // EFFECT — PERSIST ACTIVE CUSTOMER 
@@ -241,15 +236,26 @@ const [journeyData, setJourneyData] = useState<Journey>(() => {
 }, [activeCustomerId, user.role]);
 
    // ================================
-  // EFFECT — PERSIST JOURNEY DATA 
+  // EFFECT — SAVE JOURNEY (API) 
   // ================================
 
-    useEffect(() => {
-    localStorage.setItem(
-      `journey_${activeCustomerId}`,
-      JSON.stringify(journeyData)
+  useEffect(() => {
+  if (!journeyData) return;
+  saveJourney(activeCustomerId, journeyData);
+}, [journeyData, activeCustomerId]);
+
+
+  if (loading) {
+  return <div style={{ padding: 32 }}>Loading journey…</div>;
+}
+
+  if (!journeyData) {
+    return (
+      <div style={{ padding: 32 }}>
+        Failed to load journey.
+      </div>
     );
-  }, [journeyData, activeCustomerId]);
+  }
 
   // -------------------------------
   // Derived data
@@ -261,6 +267,7 @@ const [journeyData, setJourneyData] = useState<Journey>(() => {
   // Handlers
   // -------------------------------
   function toggleTask(stageId: string, taskId: number) {
+     if (!journeyData) return;
     const updatedStages = journeyData.stages.map(stage => {
       if (stage.id !== stageId) return stage;
 
@@ -288,6 +295,7 @@ const [journeyData, setJourneyData] = useState<Journey>(() => {
       stages: updatedStages
     });
   }
+
 
   // -------------------------------
   // Render

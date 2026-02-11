@@ -22,13 +22,38 @@
           "idx": 1,
           "id": "10118007745",
           "name": "Production",
-          "type": 1
+          "type": 1,
+          "env_status": "Active",
+          "project_details": {
+            "project_name": "onboarding-journey-spa",
+            "id": "41946000000249014",
+            "project_type": "Live"
+          },
+          "is_default": true,
+          "clone_env_id": "897019082",
+          "migrated_services": {
+            "migrated_services": [
+              "Settings",
+              "Cloud Scale",
+              "Serverless"
+            ],
+            "is_catalyst_migrated": true
+          },
+          "action_required": false
         },
         {
           "idx": 2,
           "id": "897019082",
           "name": "Development",
-          "type": 3
+          "type": 3,
+          "env_status": "Active",
+          "project_details": {
+            "project_name": "onboarding-journey-spa",
+            "id": "41946000000249014",
+            "project_type": "Live"
+          },
+          "is_default": false,
+          "action_required": false
         }
       ]
     }
