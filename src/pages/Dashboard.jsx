@@ -1,24 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-
-const journeys = [
-  {
-    customerId: "acme",
-    customerName: "Acme Corp",
-    journeyType: "Standard Onboarding",
-    journeyMode: "self-serve",
-    progress: 33,
-    health: "amber",
-  },
-  {
-    customerId: "globex",
-    customerName: "Globex Inc",
-    journeyType: "Guided Onboarding",
-    journeyMode: "guided",
-    progress: 10,
-    health: "green",
-  },
-];
+import { fetchJourneys } from "../api/journeys";
 
 function HealthBadge({ health }) {
   const styles = {
@@ -39,11 +21,9 @@ export default function Dashboard() {
   const [journeys, setJourneys] = useState([]);
 
   useEffect(() => {
-  fetch("/server/journeys/execute")
-    .then((res) => res.json())
+  fetchJourneys()
     .then((data) => {
-      const parsed = JSON.parse(data.output);
-      setJourneys(parsed.journeys);
+      setJourneys(data);
     })
     .catch((err) => {
       console.error("Error fetching journeys:", err);
